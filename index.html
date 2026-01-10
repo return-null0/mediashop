@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Studio</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module">
+    // Import Transformers.js from CDN
+    import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
+    
+
+    window.pipeline = pipeline;
+    window.env = env;
+    
+
+    env.allowLocalModels = false;
+</script>
+</head>
+<body>
+
+    <div id="home-screen" class="screen">
+        <h1>Create New Project</h1>
+        <div class="mode-selection">
+            <div class="mode-card" onclick="switchMode('video')">
+                <div class="icon">🎥</div>
+                <h2>Video Editor</h2>
+                <p>Timeline, cuts, and playback.</p>
+            </div>
+            <div class="mode-card" onclick="switchMode('photo')">
+                <div class="icon">🎨</div>
+                <h2>Photo Editor</h2>
+                <p>Filters, color, and adjustments.</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="video-screen" class="screen hidden">
+        <header class="toolbar">
+            <button class="back-btn" onclick="switchMode('home')">← Back</button>
+            <span>Video Editor</span>
+            <button class="primary-btn">Export MP4</button>
+        </header>
+        
+        <div class="workspace">
+            <aside class="sidebar">
+                <h3>Assets</h3>
+                <button class="upload-btn" onclick="document.getElementById('vid-upload').click()">
+                    + Import Video
+                </button>
+                <input type="file" id="vid-upload" accept="video/*" hidden>
+                <div id="video-file-name" class="file-info">No file selected</div>
+            </aside>
+            <section class="viewport">
+                <video id="main-video" controls></video>
+                <div id="video-placeholder" class="placeholder">Load a video to start</div>
+            </section>
+        </div>
+
+        <footer class="timeline">
+            <div class="timeline-controls">
+                <button id="play-btn">▶</button>
+                <span id="time-display">00:00</span>
+            </div>
+            <div class="timeline-track">
+                <div id="timeline-clip" class="clip"></div>
+            </div>
+        </footer>
+    </div>
+
+    <div id="photo-screen" class="screen hidden">
+        <header class="toolbar">
+            <button class="back-btn" onclick="switchMode('home')">← Back</button>
+            <span>Photo Editor</span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                
+    <select id="export-format" style="padding: 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: white;">
+        <option value="image/png">PNG</option>
+        <option value="image/jpeg">JPG</option>
+        <option value="image/webp">WEBP</option>
+    </select>
+    
+    <button id="btn-export" class="primary-btn">Export Image</button>
+</div>
+        </header>
+
+        <div class="workspace">
+            <aside class="sidebar">
+                <h3>Filters</h3>
+                <button class="upload-btn" onclick="document.getElementById('photo-upload').click()">
+                    Open Photo
+                </button>
+                <input type="file" id="photo-upload" accept="image/*" hidden>
+
+                <div class="controls-group">
+                    <label>Brightness</label>
+                    <input type="range" id="bright-slider" min="0" max="200" value="100">
+                </div>
+                <div class="controls-group">
+                    <label>Contrast</label>
+                    <input type="range" id="contrast-slider" min="0" max="200" value="100">
+                </div>
+                <div class="controls-group">
+                    <label>Grayscale</label>
+                    <input type="range" id="gray-slider" min="0" max="100" value="0">
+                </div>
+
+                <div class="controls-group">
+    <label>AI Tools</label>
+    <button id="btn-remove-bg" class="upload-btn" style="border: 1px solid var(--accent); color: white;">
+        ✨ Remove Background
+    </button>
+    <p id="ai-status" style="font-size: 0.7rem; color: #666; margin-top:5px;"></p>
+</div>
+
+
+            </aside>
+
+            <section class="viewport">
+                <img id="main-photo" src="" alt="">
+                <div id="photo-placeholder" class="placeholder">Open a photo to edit</div>
+            </section>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
