@@ -327,7 +327,7 @@ if (exportBtn) {
             let videoFilter = `eq=brightness=${bVal}:contrast=${cVal}:saturation=${sVal},setpts=${setPts}*PTS`;
             
             if (hasCaptions) {
-                videoFilter += `,subtitles=subtitles.srt:fontsdir=/:force_style='Fontname=arial,FontSize=24,PrimaryColour=&H00FFFF00,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,MarginV=20'`;
+                videoFilter += `,subtitles=subtitles.srt:fontsdir=/:force_style='Fontname=arial,FontSize=12,PrimaryColour=&H00FFFF00,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,MarginV=20'`;
             }
 
             const audioFilter = `atempo=${atempo}`;
