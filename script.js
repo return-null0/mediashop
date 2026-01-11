@@ -94,7 +94,7 @@ if (vidInput) {
                 trimStartPct = 0;
                 trimEndPct = 1;
                 updateTrimUI();
-                updateTimeDisplay(0.0, mainVideo.duration) 
+                updateTimeDisplay(0.0, mainVideo.duration.toFixed(2)) 
             };
         }
     });
@@ -210,9 +210,10 @@ function updateTrimUI() {
 }
 
 if (btnCaptions) {
-    btnCaptions.addEventListener('click', async () => {
+    btnCaptions.addEventListener('click', async (e) => {
         if (!mainVideo.src) return alert("Load a video first!");
-        
+        e.preventDefault()
+        e.stopPropagation()
         btnCaptions.disabled = true;
         captionStatus.textContent = "Loading FFmpeg...";
         
@@ -233,10 +234,14 @@ if (btnCaptions) {
             
             const audioData = await ffmpeg.readFile('audio.wav');
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-            const modelName = isMobile ? 'Xenova/whisper-small' : 'Xenova/whisper-tiny';
+            const modelName = isMobile ? 'Xenova/whisper-tiny' : 'Xenova/whisper-small';
             captionStatus.textContent = `Loading AI Model (${isMobile ? 'Mobile Optimized' : 'High Accuracy'})...`;
             
-            const transcriber = await pipeline('automatic-speech-recognition', modelName);
+            let options = {};
+            if (isMobile) {options.dtype = 'q4';
+                options.device = 'wasm';
+            }
+            const transcriber = await pipeline('automatic-speech-recognition', modelName, options);
             
             captionStatus.textContent = "Transcribing audio...";
             
