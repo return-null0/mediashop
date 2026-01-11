@@ -1,8 +1,6 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg';
 import { fetchFile, toBlobURL } from '@ffmpeg/util';
-import { pipeline, env } from '@xenova/transformers';
-
-
+import { pipeline, env } from '@huggingface/transformers';
 
 env.allowLocalModels = false;
 env.useBrowserCache = true;
@@ -12,13 +10,37 @@ window.switchMode = (mode) => {
     document.getElementById('video-screen').classList.add('hidden');
     document.getElementById('photo-screen').classList.add('hidden');
 
-    if(mode === 'home') document.getElementById('home-screen').classList.remove('hidden');
-    if(mode === 'video') document.getElementById('video-screen').classList.remove('hidden');
-    if(mode === 'photo') document.getElementById('photo-screen').classList.remove('hidden');
+    if (mode === 'home') document.getElementById('home-screen').classList.remove('hidden');
+    if (mode === 'video') document.getElementById('video-screen').classList.remove('hidden');
+    if (mode === 'photo') document.getElementById('photo-screen').classList.remove('hidden');
 };
+
+async function safePlay(videoElement) {
+    try {
+        await videoElement.play();
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error("Playback error:", err);
+        }
+    }
+}
 
 const ffmpeg = new FFmpeg();
 let ffmpegLoaded = false;
+
+async function loadFFmpeg() {
+    if (ffmpegLoaded) return;
+    
+    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm';
+    
+    await ffmpeg.load({
+        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
+        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
+    });
+    
+    ffmpegLoaded = true;
+    console.log('FFmpeg Ready (CDN Mode)');
+}
 
 const vidInput = document.getElementById('vid-upload');
 const mainVideo = document.getElementById('main-video');
@@ -57,22 +79,6 @@ let trimStartPct = 0;
 let trimEndPct = 1;
 let isDraggingHandle = null;
 
-async function loadFFmpeg() {
-    if (ffmpegLoaded) return;
-
-
-    const baseURL = window.location.origin;
-    
-    await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-        workerURL: await toBlobURL(`${baseURL}/ffmpeg-core.worker.js`, 'text/javascript'),
-    });
-    
-    ffmpegLoaded = true;
-    console.log('FFmpeg Ready (Local Plugin Mode)');
-}
-// 5. VIDEO LOGIC
 if (vidInput) {
     vidInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -195,17 +201,18 @@ if (btnCaptions) {
             
             await ffmpeg.exec([
                 '-i', 'input.mp4', 
-                '-vn',              // No Video
-                '-acodec', 'pcm_s16le', // WAV encoding
-                '-ar', '16000',     // 16kHz sample rate
-                '-ac', '1',         // Mono channel
+                '-vn',
+                '-acodec', 'pcm_s16le',
+                '-ar', '16000',
+                '-ac', '1',
                 'audio.wav'
             ]);
             
             const audioData = await ffmpeg.readFile('audio.wav');
             
-            captionStatus.textContent = "Loading AI Model (approx 240MB)...";
-const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-small');
+            captionStatus.textContent = "Loading AI Model (Whisper Tiny)...";
+            
+            const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
             
             captionStatus.textContent = "Transcribing audio...";
             
@@ -250,7 +257,6 @@ function formatSRTTime(seconds) {
     return `${hh}:${mm}:${ss},${ms}`;
 }
 
-
 const exportBtn = document.getElementById('btn-export-video') || document.querySelector('#video-screen .primary-btn');
 
 if (exportBtn) {
@@ -264,17 +270,13 @@ if (exportBtn) {
         try {
             await loadFFmpeg();
             
-            // --- 1. LOAD FONT (CRITICAL FOR SUBTITLES) ---
-            // FFmpeg WASM has no system fonts. We must provide one.
             exportBtn.textContent = "Loading Fonts...";
             const fontURL = 'https://raw.githubusercontent.com/ffmpegwasm/testdata/master/arial.ttf';
             await ffmpeg.writeFile('arial.ttf', await fetchFile(fontURL));
 
-            // --- 2. LOAD VIDEO ---
             exportBtn.textContent = "Loading Video...";
             await ffmpeg.writeFile('input.mp4', await fetchFile(vidInput.files[0]));
             
-            // --- 3. HANDLE CAPTIONS ---
             let hasCaptions = false;
             if (captionText.value.trim().length > 0) {
                 console.log("Found captions, writing file...");
@@ -282,7 +284,6 @@ if (exportBtn) {
                 hasCaptions = true;
             }
 
-            // --- 4. PREPARE FILTERS ---
             const start = trimStartPct * videoDuration;
             const duration = (trimEndPct * videoDuration) - start;
             
@@ -294,11 +295,8 @@ if (exportBtn) {
             const cVal = (vidContrast.value / 100).toFixed(2);
             const sVal = (vidSat.value / 100).toFixed(2);
 
-            // Filter Chain: Colors -> Speed
             let videoFilter = `eq=brightness=${bVal}:contrast=${cVal}:saturation=${sVal},setpts=${setPts}*PTS`;
             
-            // Add Subtitles
-            // fontsdir=/ tells FFmpeg to look in the main folder for the arial.ttf we uploaded
             if (hasCaptions) {
                 videoFilter += `,subtitles=subtitles.srt:fontsdir=/:force_style='Fontname=arial,FontSize=24,PrimaryColour=&H00FFFF00,OutlineColour=&H00000000,BorderStyle=1,Outline=2,Shadow=1,MarginV=20'`;
             }
@@ -307,7 +305,6 @@ if (exportBtn) {
 
             exportBtn.textContent = "Rendering...";
 
-            // --- 5. EXECUTE ---
             await ffmpeg.exec([
                 '-i', 'input.mp4',
                 '-ss', String(start),
@@ -315,7 +312,7 @@ if (exportBtn) {
                 '-vf', videoFilter,
                 '-af', audioFilter,
                 '-c:v', 'libx264',      
-                '-crf', '18',           
+                '-crf', '28',
                 '-preset', 'ultrafast', 
                 '-c:a', 'aac',         
                 'output.mp4'
@@ -328,10 +325,9 @@ if (exportBtn) {
             a.download = 'captioned-video.mp4';
             a.click();
             
-            // --- 6. CLEANUP ---
             await ffmpeg.deleteFile('input.mp4');
             await ffmpeg.deleteFile('output.mp4');
-            await ffmpeg.deleteFile('arial.ttf'); // Clean up font
+            await ffmpeg.deleteFile('arial.ttf');
             if (hasCaptions) await ffmpeg.deleteFile('subtitles.srt');
             
             alert("Export Complete!");
@@ -383,28 +379,50 @@ if (btnRemoveBg) {
         if (!mainPhoto.src) return alert("Please upload a photo first!");
         try {
             btnRemoveBg.disabled = true;
-            if (aiStatus) aiStatus.textContent = "Loading AI...";
+            if (aiStatus) aiStatus.textContent = "Loading AI Model (RMBG-1.4)...";
+            
             const segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4');
-            if (aiStatus) aiStatus.textContent = "Removing background...";
+            
+            if (aiStatus) aiStatus.textContent = "Processing image...";
+            
             const output = await segmenter(mainPhoto.src);
-            const mask = output[0].mask;
+
+            const mask = output[0].mask; 
+
             const canvas = document.createElement('canvas');
             canvas.width = mask.width;
             canvas.height = mask.height;
             const ctx = canvas.getContext('2d');
-            const tempImg = new Image();
-            tempImg.crossOrigin = "anonymous";
-            tempImg.src = mainPhoto.src;
-            await new Promise(resolve => tempImg.onload = resolve);
-            ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
-            const originalPixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+            const originalImg = new Image();
+            originalImg.crossOrigin = "anonymous";
+            originalImg.src = mainPhoto.src;
+            await new Promise(resolve => originalImg.onload = resolve);
+            
+
+            ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+            
+            const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            
+
+            
             for (let i = 0; i < mask.data.length; i++) {
-                originalPixels.data[i * 4 + 3] = mask.data[i];
+
+                if (mask.channels === 1) {
+
+                     pixelData.data[i * 4 + 3] = mask.data[i];
+                } else {
+
+                     pixelData.data[i * 4 + 3] = mask.data[i * mask.channels];
+                }
             }
-            ctx.putImageData(originalPixels, 0, 0);
+            
+            ctx.putImageData(pixelData, 0, 0);
+            
             mainPhoto.src = canvas.toDataURL();
             if (aiStatus) aiStatus.textContent = "Background Removed!";
             btnRemoveBg.disabled = false;
+            
         } catch (error) {
             console.error(error);
             if (aiStatus) aiStatus.textContent = "Error: " + error.message;
@@ -439,28 +457,13 @@ if (btnExportPhoto) {
         };
     });
 }
+
 function updateTimeDisplay(startTime, endTime) {
     const startSpan = document.getElementById('start-time-text');
     const endSpan = document.getElementById('end-time-text');
 
-    if (startSpan) {
-        startSpan.textContent = startTime + 's';
-    }
-    
-    if (endSpan) {
-        endSpan.textContent = endTime + 's';
-    }
+    if (startSpan) startSpan.textContent = startTime + 's';
+    if (endSpan) endSpan.textContent = endTime + 's';
 }
 
 updateTimeDisplay(1.5, 12.0);
-
-async function safePlay(videoElement) {
-  try {
-    await videoElement.play();
-  } catch (err) {
-    // We only ignore the error if it's an "AbortError" (interrupted by user)
-    if (err.name !== 'AbortError') {
-      console.error("Real playback error:", err);
-    }
-  }
-}
