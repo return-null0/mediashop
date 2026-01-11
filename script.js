@@ -114,7 +114,7 @@ if (playBtn) {
             if (mainVideo.currentTime >= trimEndPct * videoDuration) {
                 mainVideo.currentTime = trimStartPct * videoDuration;
             }
-            mainVideo.play();
+            safePlay(mainVideo);
             playBtn.textContent = "⏸";
             requestAnimationFrame(updateTimelineLoop);
         } else {
@@ -384,7 +384,7 @@ if (btnRemoveBg) {
         try {
             btnRemoveBg.disabled = true;
             if (aiStatus) aiStatus.textContent = "Loading AI...";
-            const segmenter = await pipeline('image-segmentation', 'Xenova/modnet');
+            const segmenter = await pipeline('image-segmentation', 'briaai/RMBG-1.4');
             if (aiStatus) aiStatus.textContent = "Removing background...";
             const output = await segmenter(mainPhoto.src);
             const mask = output[0].mask;
@@ -453,3 +453,14 @@ function updateTimeDisplay(startTime, endTime) {
 }
 
 updateTimeDisplay(1.5, 12.0);
+
+async function safePlay(videoElement) {
+  try {
+    await videoElement.play();
+  } catch (err) {
+    // We only ignore the error if it's an "AbortError" (interrupted by user)
+    if (err.name !== 'AbortError') {
+      console.error("Real playback error:", err);
+    }
+  }
+}
