@@ -232,10 +232,11 @@ if (btnCaptions) {
             ]);
             
             const audioData = await ffmpeg.readFile('audio.wav');
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const modelName = isMobile ? 'Xenova/whisper-small' : 'Xenova/whisper-tiny';
+            captionStatus.textContent = `Loading AI Model (${isMobile ? 'Mobile Optimized' : 'High Accuracy'})...`;
             
-            captionStatus.textContent = "Loading AI Model (Whisper Tiny)...";
-            
-            const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-small');
+            const transcriber = await pipeline('automatic-speech-recognition', modelName);
             
             captionStatus.textContent = "Transcribing audio...";
             
