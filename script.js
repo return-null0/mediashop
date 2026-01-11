@@ -235,7 +235,7 @@ if (btnCaptions) {
             
             captionStatus.textContent = "Loading AI Model (Whisper Tiny)...";
             
-            const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny');
+            const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/distil-whisper-small.en');
             
             captionStatus.textContent = "Transcribing audio...";
             
