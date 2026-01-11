@@ -94,6 +94,7 @@ if (vidInput) {
                 trimStartPct = 0;
                 trimEndPct = 1;
                 updateTrimUI();
+                updateTimeDisplay(0.0, mainVideo.duration) 
             };
         }
     });
@@ -149,6 +150,17 @@ function updateTimelineLoop() {
 if (handleLeft && handleRight) {
     handleLeft.addEventListener('mousedown', (e) => startDrag(e, 'left'));
     handleRight.addEventListener('mousedown', (e) => startDrag(e, 'right'));
+
+    handleLeft.addEventListener('touchstart', (e) => startDrag(e, 'left'), { passive: false });
+    handleRight.addEventListener('touchstart', (e) => startDrag(e, 'right'), { passive: false });
+}
+
+function getClientX(event) {
+
+    if (event.touches && event.touches.length > 0) {
+        return event.touches[0].clientX;
+    }
+    return event.clientX;
 }
 
 function startDrag(e, side) {
@@ -156,12 +168,17 @@ function startDrag(e, side) {
     e.stopPropagation();
     document.addEventListener('mousemove', handleDrag);
     document.addEventListener('mouseup', stopDrag);
+
+    document.addEventListener('touchmove', handleDrag, { passive: false });
+    document.addEventListener('touchend', stopDrag);
 }
 
 function handleDrag(e) {
     if (!isDraggingHandle) return;
+    if(e.cancelable) e.preventDefault();
     const rect = timelineTrack.getBoundingClientRect();
-    let pos = (e.clientX - rect.left) / rect.width;
+    const x = getClientX(e);
+    let pos = (x - rect.left) / rect.width;
     pos = Math.max(0, Math.min(1, pos));
     
     if (isDraggingHandle === 'left') {
@@ -170,6 +187,10 @@ function handleDrag(e) {
     } else {
         trimEndPct = Math.max(pos, trimStartPct + 0.05);
     }
+
+    const start = trimStartPct* videoDuration;
+    const finish = trimEndPct* videoDuration;
+    updateTimeDisplay(start.toFixed(2), finish.toFixed(2)) ;
     updateTrimUI();
 }
 
@@ -177,6 +198,8 @@ function stopDrag() {
     isDraggingHandle = null;
     document.removeEventListener('mousemove', handleDrag);
     document.removeEventListener('mouseup', stopDrag);
+    document.removeEventListener('touchmove', handleDrag);
+    document.removeEventListener('touchend', stopDrag);
 }
 
 function updateTrimUI() {
@@ -465,5 +488,3 @@ function updateTimeDisplay(startTime, endTime) {
     if (startSpan) startSpan.textContent = startTime + 's';
     if (endSpan) endSpan.textContent = endTime + 's';
 }
-
-updateTimeDisplay(1.5, 12.0);
