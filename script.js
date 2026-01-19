@@ -9,8 +9,12 @@ window.switchMode = (mode) => {
     document.getElementById('home-screen').classList.add('hidden');
     document.getElementById('video-screen').classList.add('hidden');
     document.getElementById('photo-screen').classList.add('hidden');
-
-    if (mode === 'home') document.getElementById('home-screen').classList.remove('hidden');
+    document.querySelector("header").classList.add('hidden');
+    if (mode === 'home') 
+    {
+        document.getElementById('home-screen').classList.remove('hidden');
+        document.querySelector("header").classList.remove('hidden');
+    }
     if (mode === 'video') document.getElementById('video-screen').classList.remove('hidden');
     if (mode === 'photo') document.getElementById('photo-screen').classList.remove('hidden');
 };
