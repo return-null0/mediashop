@@ -2,7 +2,7 @@
   /* --- Unified Theme Variables --- */
   --bg-panel: #10121a;
   --bg-elevated: #161b22;
-  --bg-workspace: #05060a; /* Darker for the viewport */
+  --bg-workspace: #05060a; 
   
   --border-subtle: #262938;
   --surface-border: rgba(255, 255, 255, 0.08);
@@ -40,6 +40,52 @@ body {
 
 .hidden { display: none !important; }
 
+.hyperlink{
+  text-decoration: none;
+}
+
+/* --- Header --- */
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 70px;
+  background-color: var(--bg-elevated);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  padding: 0 2rem;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.name-heading {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #25fddc;
+  letter-spacing: -0.03em;
+}
+
+.svg-icons {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+.svg-icon {
+  color: var(--text-muted);
+  transition: color 0.2s ease, transform 0.2s ease;
+  display: block; 
+}
+
+.svg-icon:hover {
+  color: var(--accent);
+  transform: translateY(-2px);
+}
+
 /* --- Home / Landing Screen --- */
 
 #home-screen {
@@ -49,12 +95,14 @@ body {
   align-items: center;
   justify-content: center;
   padding-bottom: 30px;
+  overflow-y: auto; /* Allows scrolling on small vertical screens */
 }
 
 .hero-section {
   text-align: center;
   margin-bottom: 50px;
   animation: fadeIn 0.8s ease-out;
+  padding: 0 20px;
 }
 
 .app-title {
@@ -62,7 +110,7 @@ body {
   font-weight: 800;
   letter-spacing: -0.03em;
   margin: 0;
-  color: var(--accent); /* Matches Name Heading style */
+  color: var(--accent);
   text-shadow: 0 0 30px rgba(15, 211, 181, 0.2);
   display: inline-block;
 }
@@ -90,11 +138,12 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* --- Mode Cards (Styled like Portfolio Projects) --- */
+/* --- Mode Cards --- */
 
 .mode-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  /* Changed minmax to 240px to fit smaller mobile screens without breaking grid */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); 
   gap: 20px;
   width: 100%;
   max-width: 700px;
@@ -102,7 +151,7 @@ body {
 }
 
 .mode-card {
-  background: rgba(22, 27, 44, 0.4); /* Glass surface */
+  background: rgba(22, 27, 44, 0.4); 
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--surface-border);
@@ -136,9 +185,10 @@ body {
   color: var(--text-muted);
   transition: all 0.3s ease;
   border: 1px solid var(--surface-border);
+  flex-shrink: 0;
 }
 
-.video-icon { color: #60a5fa; } /* Keep distinct colors for icons */
+.video-icon { color: #60a5fa; }
 .photo-icon { color: #f472b6; }
 
 .mode-card:hover .icon-circle {
@@ -146,9 +196,7 @@ body {
   color: var(--text-main);
   border-color: whitesmoke;
 }
-.hyperlink{
-  text-decoration: none;
-}
+
 .card-text h2 { 
   font-size: 1.1rem; 
   margin: 0 0 5px 0; 
@@ -161,44 +209,6 @@ body {
   margin: 0; 
   font-size: 0.85rem; 
   color: var(--text-muted); 
-}
-
-.name-heading {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 800;
-  color: #25fddc;
-  letter-spacing: -0.03em;
-}
-
-.svg-icons {
-  display: flex;
-  gap: 1.5rem;
-  align-items: center;
-}
-
-.svg-icon {
-  color: var(--text-muted);
-  transition: color 0.2s ease, transform 0.2s ease;
-  display: block; 
-}
-.header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 70px;
-  background-color: var(--bg-elevated);
-  z-index: 10;
-  display: flex;
-  align-items: center;
-  justify-content: space-between; 
-  padding: 0 2rem;
-  border-bottom: 1px solid var(--surface-border);
-}
-.svg-icon:hover {
-  color: var(--accent);
-  transform: translateY(-2px);
 }
 
 .card-arrow {
@@ -244,7 +254,7 @@ body {
 
 .viewport {
   flex: 1;
-  background: var(--bg-workspace); /* Darker center */
+  background: var(--bg-workspace);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,7 +267,7 @@ body {
 
 .primary-btn { 
   background: var(--accent); 
-  color: #05060a; /* Dark text on bright accent */
+  color: #05060a; 
   border: none; 
   padding: 8px 16px; 
   border-radius: 4px; 
@@ -353,7 +363,7 @@ input[type=range] {
 #playhead {
   position: absolute; height: 130%; top: -15%;
   width: 2px; 
-  background-color: #ff4757; /* Keep distinct for visibility */
+  background-color: #ff4757; 
   left: 0; z-index: 10; pointer-events: none; 
   box-shadow: 0 0 8px rgba(255, 71, 87, 0.6);
 }
@@ -401,8 +411,9 @@ input[type=range] {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* --- Responsive --- */
+/* --- Responsive Media Queries --- */
 
+/* Tablet and Standard Mobile (max-width: 768px) */
 @media (max-width: 768px) {
 
   .workspace {
@@ -446,4 +457,66 @@ input[type=range] {
   .controls-group { padding: 5px 0; border-bottom: 1px solid var(--border-subtle); }
   .toolbar { padding: 0 10px; }
   #video-file-name { display: none; }
+}
+
+/* Small Mobile Screens (max-width: 480px) */
+@media (max-width: 480px) {
+  
+  /* Compact Header */
+  .header {
+    height: 50px;
+    padding: 0 1rem;
+  }
+  
+  .name-heading {
+    font-size: 1.3rem;
+  }
+  
+  .svg-icons {
+    gap: 1rem;
+  }
+  
+  /* Compact Home Screen */
+  .hero-section {
+    margin-bottom: 30px;
+  }
+  
+  .app-title {
+    font-size: 1.8rem;
+  }
+  
+  .app-subtitle {
+    font-size: 0.9rem;
+  }
+  
+  .mode-grid {
+    padding: 0 10px;
+    gap: 15px;
+  }
+  
+  .mode-card {
+    padding: 15px;
+  }
+  
+  .icon-circle {
+    width: 40px;
+    height: 40px;
+  }
+  
+  /* Compact Workspace */
+  .viewport {
+    flex: 0 0 35vh; /* Reduce video height slightly to see more controls */
+  }
+  
+  .timeline-track {
+    margin: 10px 5px;
+  }
+  
+  .toolbar {
+    height: 50px;
+  }
+  
+  .back-btn {
+    font-size: 0.8rem;
+  }
 }
