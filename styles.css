@@ -223,7 +223,7 @@ body {
 .screen { height: 100%; display: flex; flex-direction: column; }
 
 .toolbar {
-  height: 60px;
+  height: 70px;
   background: var(--bg-elevated);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
@@ -452,7 +452,7 @@ input[type=range] {
   .mode-card { flex-direction: column; text-align: center; gap: 15px; }
   .card-content { flex-direction: column; }
   
-  .primary-btn, .upload-btn, button { min-height: 44px; font-size: 16px; }
+  .primary-btn, .upload-btn, button { font-size: 16px; }
   input[type="range"] { height: 30px; }
   .controls-group { padding: 5px 0; border-bottom: 1px solid var(--border-subtle); }
   .toolbar { padding: 0 10px; }
