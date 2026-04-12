@@ -415,7 +415,13 @@ input[type=range] {
 
 /* Tablet and Standard Mobile (max-width: 768px) */
 @media (max-width: 768px) {
+.header{
+  padding: 0 1.5rem;
+}
 
+  .name-heading {
+    font-size: 1.5rem;
+  }
   .workspace {
     flex-direction: column; 
   }
@@ -457,66 +463,4 @@ input[type=range] {
   .controls-group { padding: 5px 0; border-bottom: 1px solid var(--border-subtle); }
   .toolbar { padding: 0 10px; }
   #video-file-name { display: none; }
-}
-
-/* Small Mobile Screens (max-width: 480px) */
-@media (max-width: 480px) {
-  
-  /* Compact Header */
-  .header {
-    height: 50px;
-    padding: 0 1rem;
-  }
-  
-  .name-heading {
-    font-size: 1.3rem;
-  }
-  
-  .svg-icons {
-    gap: 1rem;
-  }
-  
-  /* Compact Home Screen */
-  .hero-section {
-    margin-bottom: 30px;
-  }
-  
-  .app-title {
-    font-size: 1.8rem;
-  }
-  
-  .app-subtitle {
-    font-size: 0.9rem;
-  }
-  
-  .mode-grid {
-    padding: 0 10px;
-    gap: 15px;
-  }
-  
-  .mode-card {
-    padding: 15px;
-  }
-  
-  .icon-circle {
-    width: 40px;
-    height: 40px;
-  }
-  
-  /* Compact Workspace */
-  .viewport {
-    flex: 0 0 35vh; /* Reduce video height slightly to see more controls */
-  }
-  
-  .timeline-track {
-    margin: 10px 5px;
-  }
-  
-  .toolbar {
-    height: 50px;
-  }
-  
-  .back-btn {
-    font-size: 0.8rem;
-  }
 }
