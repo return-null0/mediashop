@@ -418,7 +418,9 @@ input[type=range] {
 .header{
   padding: 0 1.5rem;
 }
-
+.hero-section{
+  margin-top: 50px;
+}
   .name-heading {
     font-size: 1.5rem;
   }
