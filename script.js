@@ -227,8 +227,13 @@ if (btnCaptions) {
             captionStatus.textContent = "Extracting audio...";
             await ffmpeg.writeFile('input.mp4', await fetchFile(vidInput.files[0]));
             
+            const start = trimStartPct * videoDuration;
+            const duration = (trimEndPct * videoDuration) - start;
+            
             await ffmpeg.exec([
                 '-i', 'input.mp4', 
+                '-ss', String(start),
+                '-t', String(duration),
                 '-vn',
                 '-acodec', 'pcm_s16le',
                 '-ar', '16000',
@@ -242,7 +247,8 @@ if (btnCaptions) {
             captionStatus.textContent = `Loading AI Model (${isMobile ? 'Mobile Optimized' : 'High Accuracy'})...`;
             
             let options = {};
-            if (isMobile) {options.dtype = 'q4';
+            if (isMobile) {
+                options.dtype = 'q4';
                 options.device = 'wasm';
             }
             const transcriber = await pipeline('automatic-speech-recognition', modelName, options);
@@ -279,6 +285,7 @@ if (btnCaptions) {
         btnCaptions.disabled = false;
     });
 }
+
 
 function formatSRTTime(seconds) {
     if (seconds === null) return "00:00:00,000";
@@ -336,11 +343,11 @@ if (exportBtn) {
 
             const audioFilter = `atempo=${atempo}`;
 
-            exportBtn.textContent = "Rendering...";
+                        exportBtn.textContent = "Rendering...";
 
             await ffmpeg.exec([
+                '-ss', String(start), 
                 '-i', 'input.mp4',
-                '-ss', String(start),
                 '-t', String(duration),
                 '-vf', videoFilter,
                 '-af', audioFilter,
@@ -352,6 +359,7 @@ if (exportBtn) {
             ]);
             
             const data = await ffmpeg.readFile('output.mp4');
+
             const url = URL.createObjectURL(new Blob([data.buffer], { type: 'video/mp4' }));
             const a = document.createElement('a');
             a.href = url;
@@ -474,11 +482,24 @@ if (btnExportPhoto) {
         const tempImg = new Image();
         tempImg.crossOrigin = "anonymous";
         tempImg.src = mainPhoto.src;
-        tempImg.onload = () => {
+          tempImg.onload = () => {
             canvas.width = tempImg.naturalWidth;
             canvas.height = tempImg.naturalHeight;
             ctx.filter = getComputedStyle(mainPhoto).filter;
-            ctx.drawImage(tempImg, 0, 0, canvas.width, canvas.height);
+            
+            const displayRatioX = tempImg.naturalWidth / mainPhoto.offsetWidth;
+            const displayRatioY = tempImg.naturalHeight / mainPhoto.offsetHeight;
+
+            ctx.translate(
+                canvas.width / 2 + (imgPanX * displayRatioX), 
+                canvas.height / 2 + (imgPanY * displayRatioY)
+            );
+            
+            ctx.rotate(imgRotate * Math.PI / 180);
+            ctx.scale(imgScale, imgScale);
+            
+            ctx.drawImage(tempImg, -tempImg.naturalWidth / 2, -tempImg.naturalHeight / 2);
+            
             const format = exportFormat ? exportFormat.value : 'image/png';
             const quality = format === 'image/jpeg' ? 0.9 : 1.0;
             const dataURL = canvas.toDataURL(format, quality);
@@ -488,6 +509,7 @@ if (btnExportPhoto) {
             link.download = `edited-image.${ext}`;
             link.click();
         };
+
     });
 }
 
@@ -497,4 +519,84 @@ function updateTimeDisplay(startTime, endTime) {
 
     if (startSpan) startSpan.textContent = startTime + 's';
     if (endSpan) endSpan.textContent = endTime + 's';
+}
+
+let imgScale = 1;
+let imgRotate = 0;
+let imgPanX = 0;
+let imgPanY = 0;
+let isDraggingImg = false;
+let startImgDragX = 0;
+let startImgDragY = 0;
+
+const scaleSlider = document.getElementById('scale-slider');
+const rotateSlider = document.getElementById('rotate-slider');
+const btnResetTransform = document.getElementById('btn-reset-transform');
+
+function updatePhotoTransforms() {
+    if (!mainPhoto) return;
+    mainPhoto.style.transform = `translate(${imgPanX}px, ${imgPanY}px) scale(${imgScale}) rotate(${imgRotate}deg)`;
+}
+
+if (scaleSlider) {
+    scaleSlider.addEventListener('input', (e) => {
+        imgScale = parseFloat(e.target.value);
+        updatePhotoTransforms();
+    });
+}
+
+if (rotateSlider) {
+    rotateSlider.addEventListener('input', (e) => {
+        imgRotate = parseFloat(e.target.value);
+        updatePhotoTransforms();
+    });
+}
+
+if (btnResetTransform) {
+    btnResetTransform.addEventListener('click', () => {
+        imgScale = 1;
+        imgRotate = 0;
+        imgPanX = 0;
+        imgPanY = 0;
+        if (scaleSlider) scaleSlider.value = 1;
+        if (rotateSlider) rotateSlider.value = 0;
+        updatePhotoTransforms();
+    });
+}
+
+if (mainPhoto) {
+    mainPhoto.style.cursor = 'grab';
+    
+    const startImgDrag = (e) => {
+        if (!mainPhoto.src) return;
+        isDraggingImg = true;
+        mainPhoto.style.cursor = 'grabbing';
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        startImgDragX = clientX - imgPanX;
+        startImgDragY = clientY - imgPanY;
+        e.preventDefault(); 
+    };
+
+    const doImgDrag = (e) => {
+        if (!isDraggingImg) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        imgPanX = clientX - startImgDragX;
+        imgPanY = clientY - startImgDragY;
+        updatePhotoTransforms();
+    };
+
+    const stopImgDrag = () => {
+        isDraggingImg = false;
+        mainPhoto.style.cursor = 'grab';
+    };
+
+    mainPhoto.addEventListener('mousedown', startImgDrag);
+    document.addEventListener('mousemove', doImgDrag);
+    document.addEventListener('mouseup', stopImgDrag);
+
+    mainPhoto.addEventListener('touchstart', startImgDrag, { passive: false });
+    document.addEventListener('touchmove', doImgDrag, { passive: false });
+    document.addEventListener('touchend', stopImgDrag);
 }

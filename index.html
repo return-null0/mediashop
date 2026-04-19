@@ -67,10 +67,12 @@
 </div>
     </header>
     <div id="home-screen" class="screen">
-        <div class="hero-section">
-            <h1 class="app-title">Media Studio <span class="badge">BROWSER</span></h1>
-            <p class="app-subtitle">Select mode</p>
-        </div>
+<div class="hero-section">
+    <h1 class="app-title">Media Studio <span class="badge">BROWSER</span></h1>
+    <p class="app-subtitle">Choose your workspace to get started</p>
+</div>
+
+
 
         <div class="mode-grid">
             <div class="mode-card" onclick="switchMode('video')">
@@ -119,7 +121,7 @@
 
                 <h3>AI Captions</h3>
                 <div class="controls-group">
-                    <button id="btn-auto-captions" class="upload-btn" style="border: 1px solid var(--accent); color: white; padding: 10px;">
+                    <button id="btn-auto-captions" class="upload-btn" style="border: 1px solid #666; color: white; padding: 10px;">
                         Generate Auto-Captions
                     </button>
                     <p id="caption-status" style="font-size: 0.7rem; color: #888; margin-top: 5px;"></p>
@@ -217,6 +219,22 @@
                     <label>Grayscale</label>
                     <input type="range" id="gray-slider" min="0" max="100" value="0">
                 </div>
+                
+                    <hr style="border-color: #333; margin: 15px 0;">
+<h3>Transforms</h3>
+<div class="controls-group">
+    <label>Scale</label>
+    <input type="range" id="scale-slider" min="0.1" max="3" step="0.1" value="1">
+</div>
+<div class="controls-group">
+    <label>Rotate</label>
+    <input type="range" id="rotate-slider" min="-180" max="180" value="0">
+</div>
+<div class="controls-group">
+    <button id="btn-reset-transform" class="upload-btn" style="border: 1px solid #666; color: white;">
+        Reset Position & Scale
+    </button>
+</div>
 
                 <div class="controls-group">
                     <label>AI Tools</label>
