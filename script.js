@@ -6,17 +6,31 @@ env.allowLocalModels = false;
 env.useBrowserCache = true;
 
 window.switchMode = (mode) => {
-    document.getElementById('home-screen').classList.add('hidden');
-    document.getElementById('video-screen').classList.add('hidden');
-    document.getElementById('photo-screen').classList.add('hidden');
-    document.querySelector("header").classList.add('hidden');
-    if (mode === 'home') 
-    {
-        document.getElementById('home-screen').classList.remove('hidden');
-        document.querySelector("header").classList.remove('hidden');
+    const home = document.getElementById('home-screen');
+    const video = document.getElementById('video-screen');
+    const photo = document.getElementById('photo-screen');
+    const header = document.querySelector('header');
+
+    if (!home) console.warn("Missing element: #home-screen");
+    if (!video) console.warn("Missing element: #video-screen");
+    if (!photo) console.warn("Missing element: #photo-screen");
+    if (!header) console.warn("Missing element: <header>");
+
+    home?.classList.add('hidden');
+    video?.classList.add('hidden');
+    photo?.classList.add('hidden');
+    header?.classList.add('hidden');
+    
+    if (mode === 'home') {
+        home?.classList.remove('hidden');
+        header?.classList.remove('hidden');
     }
-    if (mode === 'video') document.getElementById('video-screen').classList.remove('hidden');
-    if (mode === 'photo') document.getElementById('photo-screen').classList.remove('hidden');
+    if (mode === 'video') {
+        video?.classList.remove('hidden');
+    }
+    if (mode === 'photo') {
+        photo?.classList.remove('hidden');
+    }
 };
 
 async function safePlay(videoElement) {
@@ -600,3 +614,82 @@ if (mainPhoto) {
     document.addEventListener('touchmove', doImgDrag, { passive: false });
     document.addEventListener('touchend', stopImgDrag);
 }
+
+
+const overlay = document.getElementById('loading-overlay');
+const loadingText = document.getElementById('loading-text');
+
+function toggleLoading(show, text = 'Processing...') {
+    const overlay = document.getElementById('loading-overlay');
+    const loadingText = document.getElementById('loading-text');
+    
+    if (!overlay || !loadingText) {
+        console.warn("Loading overlay elements are missing from the DOM.");
+        return; 
+    }
+
+    if (show) {
+        loadingText.textContent = text;
+        overlay.classList.remove('hidden');
+    } else {
+        overlay.classList.add('hidden');
+    }
+}
+
+if (!window.crossOriginIsolated) {
+    const warning = document.getElementById('coop-warning');
+    if (warning) warning.classList.remove('hidden');
+    console.warn("SharedArrayBuffer not available. FFmpeg will run in fallback mode or fail. Ensure COOP/COEP headers are set.");
+}
+
+const aiWorker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+if (btnRemoveBg) {
+    btnRemoveBg.addEventListener('click', () => {
+        if (!mainPhoto.src) return alert("Please upload a photo first!");
+        
+        btnRemoveBg.disabled = true;
+        toggleLoading(true, 'Initializing AI...');
+
+        aiWorker.postMessage({ 
+            type: 'REMOVE_BACKGROUND', 
+            data: { imageSrc: mainPhoto.src } 
+        });
+    });
+}
+
+aiWorker.onmessage = async (event) => {
+    const { status, message, maskData, width, height, channels } = event.data;
+
+    if (status === 'loading' || status === 'processing') {
+        loadingText.textContent = message;
+    } 
+    else if (status === 'complete') {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        const originalImg = new Image();
+        originalImg.crossOrigin = "anonymous";
+        originalImg.src = mainPhoto.src;
+        await new Promise(resolve => originalImg.onload = resolve);
+        
+        ctx.drawImage(originalImg, 0, 0, canvas.width, canvas.height);
+        const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        for (let i = 0; i < maskData.length; i++) {
+            pixelData.data[i * 4 + 3] = channels === 1 ? maskData[i] : maskData[i * channels];
+        }
+        
+        ctx.putImageData(pixelData, 0, 0);
+        mainPhoto.src = canvas.toDataURL();
+        
+        toggleLoading(false);
+        btnRemoveBg.disabled = false;
+    } 
+    else if (status === 'error') {
+        alert("AI Error: " + message);
+        toggleLoading(false);
+        btnRemoveBg.disabled = false;
+    }
+};
