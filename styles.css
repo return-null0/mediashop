@@ -464,6 +464,9 @@ input[type=range] {
 .header{
   padding: 0 1.5rem;
 }
+.badge{
+  display: none;
+}
   .name-heading {
     font-size: 1.5rem;
   }
